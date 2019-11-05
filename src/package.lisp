@@ -7,4 +7,5 @@
            add-flag
            add-optional
            add-positional
-           add-subparser))
+           add-subparser
+           get-value))

@@ -150,6 +150,7 @@
 
 
 (defmethod add-subparser ((parser parser) (subparser parser))
+  (setf (slot-value subparser 'table) (slot-value parser 'table))
   (with-slots (subparsers)
       parser
     (push subparser subparsers)))
@@ -170,3 +171,7 @@
   `(let ((,name (make-instance 'parser :name (string-downcase (format nil "~a" ',name)))))
      ,@elements
      ,name))
+
+
+(defmethod get-value (name (parser parser))
+  (gethash name (slot-value parse 'table)))
