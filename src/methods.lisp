@@ -188,4 +188,4 @@
 
 
 (defmethod get-value (name (parser parser))
-  (gethash name (slot-value parse 'table)))
+  (gethash name (slot-value parser 'table)))
