@@ -8,14 +8,14 @@ None
 
 ## API
 
-### `create-parser (name) elements*` => parser
+`create-parser (name) elements*` => parser
 
 Create a parser with the given name and the variable of name
 
 - name: name of the parser
 - elements: the element forms that add parsing instructions to the parser
 
-### `add-flag parser &key short long help var`
+`add-flag parser &key short long help var`
 
 Add a flag to the current parser
 
@@ -26,7 +26,7 @@ Add a flag to the current parser
 - var: the variable into which the truth value is stored
 
 
-### `add-optional parser &key short long default help var`
+`add-optional parser &key short long default help var`
 
 Add a parameter to the current parser
 
@@ -38,7 +38,7 @@ Add a parameter to the current parser
 - var: the variable into which the value is stored
 
 
-### `add-positional parser &key name help`
+`add-positional parser &key name help`
 
 Add a positional argument to the parser
 
@@ -47,7 +47,7 @@ Add a positional argument to the parser
 - help:  the help message to be displayed for this flag
 
 
-### `add-subparser parser subparser`
+`add-subparser parser subparser`
 
 adds a subparser to the parser
 
@@ -55,7 +55,7 @@ adds a subparser to the parser
 - subparser: the subparser to be added
 
 
-### `add-generic-parser parser gen`
+`add-generic-parser parser gen`
 
 adds the parsing elements of the gen parser to the given parser
 
@@ -63,7 +63,7 @@ adds the parsing elements of the gen parser to the given parser
 - gen: the parser from which the parser is to be extended
 
 
-### `get-value name parser`
+`get-value name parser`
 
 get the cmd provided variable value of name from parser
 
@@ -71,7 +71,7 @@ get the cmd provided variable value of name from parser
 - parser: the parser from which to extract the value
 
 
-### `parse parser argv`
+`parse parser argv`
 
 parse the stringlist argv using parser parser
 
