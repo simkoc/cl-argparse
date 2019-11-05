@@ -2,7 +2,6 @@
 
 
 (defmethod parse-optionals ((parser parser) argv)
-  (format t "parsing optionals~%")
   (with-slots (flags optionals table)
       parser
     (do ((argv argv)
@@ -10,17 +9,13 @@
          (stop nil))
         (stop argv)
       (dolist (flag flags)
-        (format t "parsing: ~a~%" flag)
         (multiple-value-bind (rem-argv match-p)
             (parse-flag flag argv table)
-          (format t "match-p ~a~%" match-p)
           (setf argv rem-argv)
           (setf had-match (or had-match match-p))))
       (dolist (optional optionals)
-        (format t "parsing: ~a~%" optional)
         (multiple-value-bind (rem-argv match-p)
             (parse-optional optional argv table)
-          (format t "match-p ~a~%" match-p)
           (setf argv rem-argv)
           (setf had-match (or had-match match-p))))
       (if had-match
