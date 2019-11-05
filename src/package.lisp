@@ -8,4 +8,5 @@
            add-optional
            add-positional
            add-subparser
+           add-default
            get-value))

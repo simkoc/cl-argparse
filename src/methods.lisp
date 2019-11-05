@@ -1,4 +1,4 @@
-(in-package :cl-argparser)
+(in-package :de.halcony.argparse)
 
 
 (defmethod parse-optionals ((parser parser) argv)
@@ -52,6 +52,11 @@
 
 
 (defmethod parse ((parser parser) argv)
+  (with-slots (defaults table)
+      parser
+    (maphash #'(lambda (key value)
+                 (setf (gethash key table) value))
+             defaults))
   (multiple-value-bind (argv)
       (parse-optionals parser argv)
     (multiple-value-bind (argv)
@@ -165,6 +170,15 @@
       (setf poptionals (append poptionals optionals))
       (setf ppositionals (append ppositionals positionals))
       (setf psubparsers (append psubparsers subparsers)))))
+
+
+(defmethod add-default ((parser parser)
+                        &key
+                          (var (error "a variable name has to be provided"))
+                          (default (error "the default value has to be provided")))
+  (with-slots (defaults)
+      parser
+    (setf (gethash var defaults) default)))
 
 
 (defmacro create-parser ((name) &body elements)

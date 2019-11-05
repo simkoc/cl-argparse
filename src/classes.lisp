@@ -1,4 +1,4 @@
-(in-package :cl-argparser)
+(in-package :de.halcony.argparse)
 
 
 (define-condition cmd-arg-error (simple-error) ())
@@ -67,6 +67,8 @@
                 :reader positionals)
    (subparsers :initform (list)
                :reader subparsers)
+   (defaults :initform (make-hash-table :test 'equalp)
+             :reader defaults)
    (table :initform (make-hash-table :test 'equalp)
           :reader table)))
 

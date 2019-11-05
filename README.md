@@ -62,6 +62,14 @@ adds the parsing elements of the gen parser to the given parser
 - parser: the parser which is to be extended
 - gen: the parser from which the parser is to be extended
 
+`add-default parser &key var default`
+
+adds a default value to the parser
+
+- parser: the parser to which the default value is added
+- var: the variable name to which the default value is bound
+- default: the default value
+
 
 `get-value name parser`
 
