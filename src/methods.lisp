@@ -2,6 +2,7 @@
 
 
 (defmethod parse-optionals ((parser parser) argv)
+  ;(format t "parsing optionals on ~a~%" argv)
   (with-slots (flags optionals table)
       parser
     (do ((argv argv)
@@ -24,6 +25,7 @@
 
 
 (defmethod parse-positionals ((parser parser) initial-argv)
+  ;(format t "parsing positionals on ~a~%" initial-argv)
   (with-slots (positionals table)
       parser
     (do ((parsers positionals
@@ -38,12 +40,22 @@
 (defmethod parse-subparsers ((parser parser) argv)
   (with-slots (subparsers)
       parser
-    (dolist (subparser subparsers)
-      (with-slots (name)
-          subparser
-        (if (string= (car argv) name)
-            (return (parse parser (cdr argv))))))
-    argv))
+    (if (and subparsers argv)
+        (progn
+          (dolist (subparser subparsers)
+            (with-slots (name)
+                subparser
+              (if (string= (car argv) name)
+                  (return-from parse-subparsers (multiple-value-bind (parser argv)
+                                                    (parse subparser (cdr argv))
+                                                  (values parser argv))))))
+          (error 'cmd-arg-error
+                 :format-control "there is no matching action command"))
+        (if (and subparsers
+                 (not argv))
+            (error 'cmd-arg-error
+                   :format-control "there is a missing action command")
+            argv))))
 
 
 (defmethod parse ((parser parser) argv)
@@ -52,17 +64,26 @@
     (maphash #'(lambda (key value)
                  (setf (gethash key table) value))
              defaults))
-  (multiple-value-bind (argv)
-      (parse-optionals parser argv)
-    (multiple-value-bind (argv)
-        (parse-positionals parser argv)
+  (handler-case
       (multiple-value-bind (argv)
-          (parse-subparsers parser argv)
-        (if argv
-            (error 'cmd-arg-error
-                   :format-control "to many arguments provided. Leftover ~a"
-                   :format-arguments (list argv))
-            parser)))))
+          (parse-optionals parser argv)
+        (multiple-value-bind (argv)
+            (parse-positionals parser argv)
+          (multiple-value-bind (ret-parser argv)
+              (parse-subparsers parser argv)
+            (declare (ignore ret-parser))
+            (if argv
+                (error 'cmd-arg-error
+                       :format-control "to many arguments provided. Leftover ~a"
+                       :format-arguments (list argv))
+                parser))))
+    (cmd-arg-error (e)
+      (print-help parser)
+      (error 'cancel-parsing-error
+             :format-control "The provided arguments are not satisfactory"))
+    (help-flag-condition (e)
+      (print-help parser)
+      (error 'cancel-parsing-error))))
 
 
 (defmethod parse-flag ((flag flag) argv table)
@@ -92,6 +113,24 @@
      flags)
     (setf (gethash var table) nil)
     parser))
+
+
+(defmethod parse-flag ((help-flag help-flag) argv table)
+  (with-slots (short long)
+      help-flag
+    (let ((short (format nil "-~a" short))
+          (long (if long (format nil "--~a" long) nil)))
+      (if (or (string= short (car argv))
+              (and long
+                   (string= long (car argv))))
+          (error 'help-flag-condition)
+          (values argv nil)))))
+
+
+(defmethod add-help ((parser parser))
+  (with-slots (flags)
+      parser
+    (push (make-instance 'help-flag) flags)))
 
 
 (defmethod parse-optional ((optional optional) argv table)
@@ -150,10 +189,19 @@
 
 
 (defmethod add-subparser ((parser parser) (subparser parser))
-  (setf (slot-value subparser 'table) (slot-value parser 'table))
-  (with-slots (subparsers)
+  (with-slots (subparsers name previous-parsers)
       parser
-    (push subparser subparsers)))
+    (push subparser subparsers)
+    (sync-parser parser)))
+
+
+(defmethod sync-parser ((parser parser))
+  (with-slots (name table previous-parsers subparsers)
+      parser
+    (dolist (subparser subparsers)
+      (setf (slot-value subparser 'previous-parsers) (append previous-parsers (list name)))
+      (setf (slot-value subparser 'table) table)
+      (sync-parser subparser))))
 
 
 (defmethod add-generic-parser ((parser parser) (gen parser))
@@ -176,11 +224,50 @@
     (setf (gethash var defaults) default)))
 
 
-(defmacro create-parser ((name) &body elements)
-  `(let ((,name (make-instance 'parser :name (string-downcase (format nil "~a" ',name)))))
+(defmacro create-sub-parser ((name &optional (description "no description")) &body elements)
+  `(let ((,name (make-instance 'parser :name (string-downcase (format nil "~a" ',name)) :description ,description)))
+     (cl-argparse:add-help ,name)
      ,@elements
      ,name))
+
+(defmacro create-main-parser ((var &optional (description "no description")) &body elements)
+  `(let ((,var (make-instance 'parser :name "main-parser" :description ,description)))
+     (cl-argparse:add-help ,var)
+     ,@elements
+     ,var))
 
 
 (defmethod get-value (name (parser parser))
   (gethash name (slot-value parser 'table)))
+
+
+(defmacro aif (condition if then)
+  `(let ((it ,condition))
+     (if it
+         ,if
+         ,then)))
+
+
+(defmethod print-help ((parser parser))
+  (with-slots (previous-parsers name flags optionals positionals subparsers description)
+      parser
+    (format t "./program.lisp~a~a~a~a~%~%~a~%~%"
+            (aif (append previous-parsers (list name))
+                 (format nil " ~{... ~a~^ ~}" (remove-if #'(lambda(elem)
+                                                             (string= elem "main-parser"))
+                                                         it))
+                 "")
+            (aif (append (mapcar #'short flags)
+                         (mapcar #'short optionals))
+                 (format nil " (~{-~a~^,~})" it)
+                 "")
+            (aif (mapcar #'name positionals)
+                 (format nil "~{ [~a]~%~}" it)
+                 "")
+            (aif (mapcar #'name subparsers)
+                 (format nil " {~{~a~^,~}}" it)
+                 "")
+            description)
+    (format t "~{~a~%~}" flags)
+    (format t "~{~a~%~}" optionals)
+    (format t "~{~a~%~}" positionals)))
