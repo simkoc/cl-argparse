@@ -262,7 +262,7 @@
                  (format nil " (~{-~a~^,~})" it)
                  "")
             (aif (mapcar #'name positionals)
-                 (format nil "~{ [~a]~%~}" it)
+                 (format nil "~{ [~a]~}" it)
                  "")
             (aif (mapcar #'name subparsers)
                  (format nil " {~{~a~^,~}}" it)

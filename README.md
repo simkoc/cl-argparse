@@ -8,12 +8,23 @@ None
 
 ## API
 
-`create-parser (name) elements*` => parser
+`create-main-parser (var &optional description) elements*` => parser
 
 Create a parser with the given name and the variable of name
 
-- name: name of the parser
+- var: the variable name for the parser
+- description: the description for this parser
 - elements: the element forms that add parsing instructions to the parser
+
+
+`create-sub-parser (name &optional description) elements*` => parser
+
+Create a parser with the given name and the variable of name
+
+- name: the variable name and the name for the parser
+- description: the description for this parser
+- elements: the element forms that add parsing instructions to the parser
+
 
 `add-flag parser &key short long help var`
 
@@ -85,3 +96,27 @@ parse the stringlist argv using parser parser
 
 - parser: the parser to be used
 - argv: the arguments (i.e., list of strings) to be parsed
+
+
+## Usage
+
+```
+(in-package :cl-argparse)
+
+(format t "~a~%"
+        (parse
+         (create-main-parser (main-parser "here comes the description of the program")
+           (add-flag main-parser :short "g" :long "goo" :help "this is an example flag" :var "goo")
+           (add-optional main-parser :short "t" :long "test" :help "this is an example optional argument" :var "test")
+           (add-positional main-parser :name "pos" :help "this is an example for a positional")
+           (add-subparser main-parser (create-sub-parser (sub "this is a sub action parser")
+                                        (add-positional sub :name "action" :help "this is an example for a positional"))))
+         (list "-g" "-t" "alle" "positional" "sub" "theaction")))
+
+=> <PARSER
+     goo -> T
+     test -> alle
+     pos -> positional
+     action -> theaction
+   >
+```
