@@ -3,6 +3,7 @@
   (:use :cl-user :cl)
   (:export create-main-parser
            create-sub-parser
+           cancel-parsing-error
            parser
            parse
            add-flag
@@ -11,4 +12,5 @@
            add-subparser
            add-default
            add-help
+           add-generic-parser
            get-value))

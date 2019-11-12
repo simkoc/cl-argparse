@@ -93,7 +93,7 @@
 (defmethod print-object ((positional positional) stream)
   (with-slots (name help-message)
       positional
-    (format stream "[~a] ~a" name help-message)))
+    (format stream "   [~a] ~a" name help-message)))
 
 
 (defclass parser ()
