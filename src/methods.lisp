@@ -205,14 +205,16 @@
 
 
 (defmethod add-generic-parser ((parser parser) (gen parser))
-  (with-slots (pflags poptionals ppositionals psubparsers)
+  (with-slots (flags optionals positionals)
       parser
-    (with-slots (flags optionals positionals subparsers)
-        gen
-      (setf pflags (append pflags flags))
-      (setf poptionals (append poptionals optionals))
-      (setf ppositionals (append ppositionals positionals))
-      (setf psubparsers (append psubparsers subparsers)))))
+    (let ((pflags flags)
+          (poptionals optionals)
+          (ppositionals positionals))
+      (with-slots (flags optionals positionals subparsers)
+          gen
+        (setf pflags (append pflags flags))
+        (setf poptionals (append poptionals optionals))
+        (setf ppositionals (append ppositionals positionals))))))
 
 
 (defmethod add-default ((parser parser)
