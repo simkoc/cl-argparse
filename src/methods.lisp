@@ -182,10 +182,10 @@
                              (help ""))
   (with-slots (positionals)
       parser
-    (push (make-instance 'positional
-                         :name name
-                         :help-message help)
-          positionals)))
+    (setf positionals (append positionals
+                              (list (make-instance 'positional
+                                                   :name name
+                                                   :help-message help))))))
 
 
 (defmethod add-subparser ((parser parser) (subparser parser))

@@ -13,4 +13,5 @@
            add-default
            add-help
            add-generic-parser
-           get-value))
+           get-value
+           cancel-parsing-error))
