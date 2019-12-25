@@ -2,7 +2,11 @@
 
 
 (defmethod parse-optionals ((parser parser) argv)
-  ;(format t "parsing optionals on ~a~%" argv)
+  "Given a parser and a list of strings this method extracts the provided
+   flags and optional parameters and enters them into the parser table.
+   It returns the remaining list. The parsing either stops if all optionals
+   or flags of the parser a filled or if the currently viewed list element does
+   not match either an optional or flag."
   (with-slots (flags optionals table)
       parser
     (do ((argv argv)
@@ -25,7 +29,9 @@
 
 
 (defmethod parse-positionals ((parser parser) initial-argv)
-  ;(format t "parsing positionals on ~a~%" initial-argv)
+  "Given a parser and a list of strings this method extracts the
+   provided positional parameters and enters them into the parser table.
+   It returns the remaining list"
   (with-slots (positionals table)
       parser
     (do ((parsers positionals
@@ -38,6 +44,9 @@
 
 
 (defmethod parse-subparsers ((parser parser) argv)
+  "Given a parser and a list of strings this method extracts the
+   subparser from which the parsing continues and continues the
+   parsing with this parser"
   (with-slots (subparsers)
       parser
     (if (and subparsers argv)
@@ -59,6 +68,8 @@
 
 
 (defmethod parse ((parser parser) argv)
+  "This is the main parsing method and providing a parser and a string of
+   arguments it extracts and enters all provided parameters into the parser"
   (with-slots (defaults table)
       parser
     (maphash #'(lambda (key value)
@@ -87,6 +98,9 @@
 
 
 (defmethod parse-flag ((flag flag) argv table)
+  "This method tries to match the given (car argv) with the flag. If this
+   succeeds the flag is entered into the parser value table and (cdr argv) and
+   T is returned. If there is no match argv and nil is returned"
   (with-slots (short long var)
       flag
     (let ((short (format nil "-~a" short))
@@ -102,6 +116,10 @@
                      &key
                        (short (error "a short flag has to be provided")) long help
                        (var (error "the variable name has to be provided")))
+  "Adds a flag to the given parser using short as the short value of the flag (has to
+   be lead with a single - in the argument list. The var determines the name under
+   which it is stored in the parser value table. long determines the long version of the
+   flag (lead with two -) and help is the help string used to generate the help message"
   (with-slots (table flags)
       parser
     (push
@@ -116,6 +134,9 @@
 
 
 (defmethod parse-flag ((help-flag help-flag) argv table)
+  "Tries to parse (car argv) using the passed flag (i.e., help flag).
+   If the flag is successfully parsed the help-flag-condition is
+   signaled, else argv and nil is returned."
   (with-slots (short long)
       help-flag
     (let ((short (format nil "-~a" short))
@@ -128,12 +149,16 @@
 
 
 (defmethod add-help ((parser parser))
+  "Adds the help flag to the parser"
   (with-slots (flags)
       parser
     (push (make-instance 'help-flag) flags)))
 
 
 (defmethod parse-optional ((optional optional) argv table)
+  "Tries to parse (car argv) using the given optional. If the optional
+   matches the defined table value is set to (cadr argv) and (cddr argv)
+   and T are returned. Else argv and nil are returned"
   (with-slots (short long var)
       optional
     (let ((short (format nil "-~a" short))
@@ -149,6 +174,10 @@
                          &key
                            (short (error "a short value has to be provided")) long default help
                            (var (error "the variable name has to be provided")))
+  "Adds an optional value to the given parser. short is the to be used parameter name (with a single
+   leading -). Var is the name under which to store the value in the parser table. long is the long
+   version of the name (lead with two --). Default determines the default value and help is the
+   help message string to be used in the auto generated help message"
   (with-slots (table optionals)
       parser
     (push
@@ -165,6 +194,9 @@
 
 
 (defmethod parse-positional ((positional positional) argv table)
+  "Parses a positional argument, i.e., (car argv) and stores it in the
+   given table. Throws an error in case no value is contained in argv.
+   Returns (cdr argv) as it either always works or has to throw an error."
   (with-slots (name)
       positional
     (if argv
@@ -180,6 +212,9 @@
                            &key
                              (name (error "the variable name has to be provided"))
                              (help ""))
+  "Adds a positional argument to the given parser. Name is both the name of the positional
+   used in the help message as well as the name under which the value is stored. Help defines
+   the string to be used in the auto generated help message"
   (with-slots (positionals)
       parser
     (setf positionals (append positionals
@@ -189,6 +224,7 @@
 
 
 (defmethod add-subparser ((parser parser) (subparser parser))
+  "Adds the given sub parser to the given parser."
   (with-slots (subparsers name previous-parsers)
       parser
     (push subparser subparsers)
@@ -196,6 +232,9 @@
 
 
 (defmethod sync-parser ((parser parser))
+  "Syncs the current parser, i.e., merges the value table (for defaults) as well as
+   append the list of previous parsers to the sub parser for generating the help
+   message"
   (with-slots (name table previous-parsers subparsers)
       parser
     (dolist (subparser subparsers)
@@ -205,6 +244,9 @@
 
 
 (defmethod add-generic-parser ((parser parser) (gen parser))
+  "Adds a generic parser to the given parser. Basically merges the
+   generic parser into the given parser, adding all the flags, optional,
+   and positional utilities. Subparsers are ignored."
   (with-slots (flags optionals positionals)
       parser
     (let ((pflags flags)
@@ -221,18 +263,25 @@
                         &key
                           (var (error "a variable name has to be provided"))
                           (default (error "the default value has to be provided")))
+  "Adds a default value to the parser value table. I.e., allows to define sub parser
+   specific default values that cannot be set via the cmd"
   (with-slots (defaults)
       parser
     (setf (gethash var defaults) default)))
 
 
 (defmacro create-sub-parser ((name &optional (description "no description")) &body elements)
+  "Macro for creating a sub parser, provides name as the subparser name to the help message, adds a
+   help flag and allows to add further parameters to the parser. Returns the parser at the end."
   `(let ((,name (make-instance 'parser :name (string-downcase (format nil "~a" ',name)) :description ,description)))
      (cl-argparse:add-help ,name)
      ,@elements
      ,name))
 
 (defmacro create-main-parser ((var &optional (description "no description")) &body elements)
+  "Macro for creating the main parser. Always names the parser main-parser (required for parsing
+   to work) and adds the help flag. Allows to add further parameters to the parser. Returns the parser
+   at the end"
   `(let ((,var (make-instance 'parser :name "main-parser" :description ,description)))
      (cl-argparse:add-help ,var)
      ,@elements
@@ -240,6 +289,7 @@
 
 
 (defmethod get-value (name (parser parser))
+  "Get the stored value for name from the given parser."
   (gethash name (slot-value parser 'table)))
 
 
@@ -251,6 +301,7 @@
 
 
 (defmethod print-help ((parser parser))
+  "Functionality to print the correct help message for the given parser"
   (with-slots (previous-parsers name flags optionals positionals subparsers description)
       parser
     (format t "./program.lisp~a~a~a~a~%~%~a~%~%"
