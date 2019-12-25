@@ -100,6 +100,10 @@ parse the stringlist argv using parser parser
 
 ## Usage
 
+You can either use the short example below to get started or the longer example provided as commented source code in `./examples/example.lisp`.
+
+### Short Example
+
 ```
 (in-package :cl-argparse)
 
