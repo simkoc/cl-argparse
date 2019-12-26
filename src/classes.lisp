@@ -2,8 +2,6 @@
 
 
 (define-condition cmd-arg-error (simple-error)
-  "Condition that signals that a cmd argument was unexpected/wrong.
-   Only relevant for internal use"
   ((format-control :initarg :format-control
                    :reader format-control
                    :initform "")
@@ -12,7 +10,6 @@
                      :initform (list))))
 
 (define-condition help-flag-condition (simple-error)
-  "Condition that singals that a help flag was encountered during parsing"
   ())
 
 
@@ -23,10 +20,6 @@
 
 
 (define-condition cancel-parsing-error (simple-error)
-  "Condition that is singaled if for one reason or the other the
-   parsing of the arg string is canceld. Contains the reason for
-   it as values and can be pretty printed. Is exposed via the API.
-   In case it was triggered by a help flag the text is empty"
   ((format-control :initarg :format-control
                    :reader format-control
                    :initform "")
