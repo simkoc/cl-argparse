@@ -3,6 +3,7 @@
   :author "Simon Koch <projects@halcony.de>"
   :maintainer "Simon Koch <projects@halcony.de>"
   :license "MIT"
+  :description "A python argparse inspired command line parser library"
   :components ((:file "package")
                (:file "classes"
                 :depends-on ("package"))
