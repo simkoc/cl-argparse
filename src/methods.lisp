@@ -265,6 +265,7 @@
                           (default (error "the default value has to be provided")))
   "Adds a default value to the parser value table. I.e., allows to define sub parser
    specific default values that cannot be set via the cmd"
+  (format t "is executed ~a ~a ~%" var default)
   (with-slots (defaults)
       parser
     (setf (gethash var defaults) default)))
@@ -277,6 +278,7 @@
      (cl-argparse:add-help ,name)
      ,@elements
      ,name))
+
 
 (defmacro create-main-parser ((var &optional (description "no description")) &body elements)
   "Macro for creating the main parser. Always names the parser main-parser (required for parsing
@@ -307,11 +309,11 @@
     (format t "./program.lisp~a~a~a~a~%~%~a~%~%"
             (aif (append previous-parsers (list name))
                  (format nil " ~{... ~a~^ ~}" (remove-if #'(lambda(elem)
-                                                             (string= elem "main-parser"))
+                                                                   (string= elem "main-parser"))
                                                          it))
-                 "")
-            (aif (append (mapcar #'short flags)
-                         (mapcar #'short optionals))
+                         "")
+                 (aif (append (mapcar #'short flags)
+                              (mapcar #'short optionals))
                  (format nil " (~{-~a~^,~})" it)
                  "")
             (aif (mapcar #'name positionals)
@@ -324,3 +326,22 @@
     (format t "~{~a~%~}" flags)
     (format t "~{~a~%~}" optionals)
     (format t "~{~a~%~}" positionals)))
+
+
+(defmacro create-mockup-parser (&rest key-value-list)
+  "allows for the creation of a mockup parser to enable creating a parser without actually parsing
+   command line parameters"
+  (assert (= (mod (length key-value-list) 2) 0) () "an even amount of key value pairs has to be provided")
+  (let ((pair-up (do ((l key-value-list
+                         (cddr l))
+                      (pairs (list)))
+                     ((not l) pairs)
+                   (push (cons (car l) (cadr l)) pairs))))
+    `(cl-argparse:parse
+      (cl-argparse:create-main-parser (mockup "mockup parser")
+        ,@(mapcar #'(lambda (key-value)
+                      `(cl-argparse:add-default mockup
+                                                :var ,(car key-value)
+                                                :default ,(cdr key-value)))
+                  pair-up))
+      (list))))

@@ -98,6 +98,12 @@ parse the stringlist argv using parser parser
 - argv: the arguments (i.e., list of strings) to be parsed
 
 
+`create-mockup-parser key-value-list*`
+
+create a parser simulating a parsing resulting in the given key-value-list
+
+- key-value-list: a paired list of strings to create the parser from
+
 ## Usage
 
 You can either use the short example below to get started or the longer example provided as commented source code in `./src/examples/example.lisp`.
