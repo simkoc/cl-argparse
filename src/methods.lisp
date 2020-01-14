@@ -265,7 +265,6 @@
                           (default (error "the default value has to be provided")))
   "Adds a default value to the parser value table. I.e., allows to define sub parser
    specific default values that cannot be set via the cmd"
-  (format t "is executed ~a ~a ~%" var default)
   (with-slots (defaults)
       parser
     (setf (gethash var defaults) default)))
