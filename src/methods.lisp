@@ -189,8 +189,8 @@
                     :var var
                     :default default)
      optionals)
-    (if default
-        (setf (gethash var table) default))))
+    (when default
+      (setf (gethash var table) default))))
 
 
 (defmethod parse-positional ((positional positional) argv table)
@@ -231,6 +231,14 @@
     (sync-parser parser)))
 
 
+(defun merge-tables (table-a table-b)
+  "merges table-b into table-a"
+  (maphash (lambda (key value)
+             (setf (gethash key table-a)
+                   value))
+           table-b)
+  table-a)
+
 (defmethod sync-parser ((parser parser))
   "Syncs the current parser, i.e., merges the value table (for defaults) as well as
    append the list of previous parsers to the sub parser for generating the help
@@ -239,7 +247,7 @@
       parser
     (dolist (subparser subparsers)
       (setf (slot-value subparser 'previous-parsers) (append previous-parsers (list name)))
-      (setf (slot-value subparser 'table) table)
+      (setf (slot-value subparser 'table) (merge-tables table (slot-value subparser 'table)))
       (sync-parser subparser))))
 
 
@@ -247,13 +255,15 @@
   "Adds a generic parser to the given parser. Basically merges the
    generic parser into the given parser, adding all the flags, optional,
    and positional utilities. Subparsers are ignored."
-  (with-slots (flags optionals positionals)
+  (with-slots (table flags optionals positionals defaults)
       parser
     (let ((pflags flags)
           (poptionals optionals)
-          (ppositionals positionals))
-      (with-slots (flags optionals positionals subparsers)
+          (ppositionals positionals)
+          (parser-table table))
+      (with-slots (table flags optionals positionals subparsers)
           gen
+        (setf parser-table (merge-tables parser-table table))
         (setf pflags (append pflags flags))
         (setf poptionals (append poptionals optionals))
         (setf ppositionals (append ppositionals positionals))))))
@@ -344,3 +354,11 @@
                                                 :default ,(cdr key-value)))
                   pair-up))
       (list))))
+
+
+(defmethod get-key-value-pairs ((parser parser))
+  (with-slots (table)
+      parser
+    (mapcar (lambda (key)
+              (cons key (gethash key table)))
+            (loop for key being the hash-keys of table collect key))))
