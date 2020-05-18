@@ -264,7 +264,9 @@
       (with-slots (table flags optionals positionals subparsers)
           gen
         (setf (slot-value parser 'table) (merge-tables parser-table table))
-        (setf (slot-value parser 'flags) (append pflags flags))
+        (setf (slot-value parser 'flags) (append pflags (remove-if #'(lambda (flag)
+                                                                       (typep flag 'help-flag))
+                                                                   flags)))
         (setf (slot-value parser 'optionals) (append poptionals optionals))
         (setf (slot-value parser 'positionals) (append ppositionals positionals))))))
 
