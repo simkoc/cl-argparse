@@ -257,16 +257,17 @@
    and positional utilities. Subparsers are ignored."
   (with-slots (table flags optionals positionals defaults)
       parser
+    (format t "adding subparser~%")
     (let ((pflags flags)
           (poptionals optionals)
           (ppositionals positionals)
           (parser-table table))
       (with-slots (table flags optionals positionals subparsers)
           gen
-        (setf parser-table (merge-tables parser-table table))
-        (setf pflags (append pflags flags))
-        (setf poptionals (append poptionals optionals))
-        (setf ppositionals (append ppositionals positionals))))))
+        (setf (slot-value parser 'table) (merge-tables parser-table table))
+        (setf (slot-value parser 'flags) (append pflags flags))
+        (setf (slot-value parser 'optionals) (append poptionals optionals))
+        (setf (slot-value parser 'positionals) (append ppositionals positionals))))))
 
 
 (defmethod add-default ((parser parser)
