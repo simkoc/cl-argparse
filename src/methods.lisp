@@ -257,7 +257,6 @@
    and positional utilities. Subparsers are ignored."
   (with-slots (table flags optionals positionals defaults)
       parser
-    (format t "adding subparser~%")
     (let ((pflags flags)
           (poptionals optionals)
           (ppositionals positionals)
