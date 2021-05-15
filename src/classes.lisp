@@ -101,6 +101,9 @@
   ((description :initarg :description
                 :reader description
                 :initform "no description")
+   (program-name :initform "program.lisp"
+                 :initarg :program-name
+                 :reader program-name)
    (previous-parsers :initform (list)
                     :reader previous-parsers)
    (name :initform ""
