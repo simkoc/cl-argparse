@@ -225,8 +225,9 @@
 
 (defmethod add-subparser ((parser parser) (subparser parser))
   "Adds the given sub parser to the given parser."
-  (with-slots (subparsers name previous-parsers)
+  (with-slots (subparsers name previous-parsers program-name)
       parser
+    (setf (slot-value subparser 'program-name) program-name)
     (push subparser subparsers)
     (sync-parser parser)))
 
@@ -291,11 +292,11 @@
      ,name))
 
 
-(defmacro create-main-parser ((var &optional (description "no description")) &body elements)
+(defmacro create-main-parser ((var &optional (description "no description") (program-name "program.lisp") ) &body elements)
   "Macro for creating the main parser. Always names the parser main-parser (required for parsing
    to work) and adds the help flag. Allows to add further parameters to the parser. Returns the parser
    at the end"
-  `(let ((,var (make-instance 'parser :name "main-parser" :description ,description)))
+  `(let ((,var (make-instance 'parser :name "main-parser" :description ,description :program-name ,program-name)))
      (cl-argparse:add-help ,var)
      ,@elements
      ,var))
@@ -315,9 +316,10 @@
 
 (defmethod print-help ((parser parser))
   "Functionality to print the correct help message for the given parser"
-  (with-slots (previous-parsers name flags optionals positionals subparsers description)
+  (with-slots (previous-parsers name flags optionals positionals subparsers description program-name)
       parser
-    (format t "./program.lisp~a~a~a~a~%~%~a~%~%"
+    (format t "./~a~a~a~a~a~%~%~a~%~%"
+            program-name
             (aif (append previous-parsers (list name))
                  (format nil " ~{... ~a~^ ~}" (remove-if #'(lambda(elem)
                                                                    (string= elem "main-parser"))
